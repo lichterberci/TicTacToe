@@ -1,0 +1,137 @@
+
+/**
+ * Evaluates the state and return either the best (or worst) move to play, or its rating.
+ * Engine optimizes for possible highest point, player optimizes for possible minimum points, a draw is a 0
+ * @param {Array} currentState array (len of 9) of chars, for example: ["X", " ", "O", ...]
+ * @param {Boolean} isEngineMove determines wether the next move is by the engine
+ * @param {String} engineChar what side is the engine playing ("X or "O")
+ * @param {String} playerChar what side is the player playing ("X or "O")
+ * @param {Boolean} shouldReturnAnIndex we only want to get the index of the first iteration 
+ * --> if you call the function with the intention of getting the best move's index, it should be true
+ * @param {Boolenan} isLogging wether we log things onto the console
+ * @param {Boolean} enginePlaysOptimally true --> the engine is unbeatable, false --> the engine literally cannot win, it will always try to loose
+ */
+function TicTacToeMinimax (currentState, isEngineMove, engineChar = "X", playerChar = "O", shouldReturnAnIndex = false, isLogging = false, enginePlaysOptimally = true)
+{
+
+    let eval = evaluateState (currentState)
+
+    if (eval != "PLAYING")
+        return eval == engineChar ? -1 : eval == playerChar ? 1 : 0
+
+    let pointsOfSquares = []
+    for (let i = 0; i < 9; i++) {
+        const element = currentState[i];
+
+        if (element != " "){
+            continue
+        }
+        
+        let alternatedState = []
+        
+        for (let j = 0; j < 9; j++) 
+        {
+            if (i == j)
+                alternatedState.push (isEngineMove ? engineChar : playerChar)
+            else
+                alternatedState.push (currentState[j])
+        }
+
+        let points = TicTacToeMinimax (alternatedState, !isEngineMove, engineChar, playerChar, false, isLogging)
+
+        pointsOfSquares.push ({"point" : points, "index" : i})
+    }    
+    
+    if (isLogging)
+        console.log(pointsOfSquares)
+
+    if ((isEngineMove && enginePlaysOptimally) || (!isEngineMove && !enginePlaysOptimally)){
+        
+        let lowestPoint = Number.POSITIVE_INFINITY
+        let index = -1
+
+        let pointSum = 0
+
+        pointsOfSquares.forEach (e => {
+            if (e.point < lowestPoint)
+            {
+                lowestPoint = e.point
+                index = e.index   
+            }
+            pointSum += e.point
+        })
+
+        let avgPoint = pointSum / pointsOfSquares.length
+
+        if (shouldReturnAnIndex) {
+            return index
+        }
+        else{
+            return lowestPoint * 1000 + avgPoint * 0
+        }
+    }
+    else{
+        let highestPoint = Number.NEGATIVE_INFINITY
+        let index = -1
+
+        let pointSum = 0
+
+        pointsOfSquares.forEach (e => {
+            if (e.point > highestPoint)
+            {
+                highestPoint = e.point
+                index = e.index   
+            }
+            pointSum += e.point
+        })
+
+        let avgPoint = pointSum / pointsOfSquares.length
+
+        if (shouldReturnAnIndex) {
+            return index
+        }
+        else{
+            return highestPoint * 1000 + avgPoint * 0
+        }
+    }
+
+}
+
+/**
+ * Determines wether the current state is won by either player or is a draw or is not yet finished.
+ * @param {Array} state array (len of 9) of chars, for example: ["X", " ", "O", ...]
+ * @returns the character of the winning party ("X" or "O"), "DRAW" if is a draw, or "PLAYING" if the game has not yet ended.
+ */
+function evaluateState (state) {
+
+    for (let i = 0; i < 3; i++) {
+        if (state[0 + i*3] == state[1 + i*3] && state[1 + i*3] == state[2 + i*3])
+            if (state[0 + i*3] == "X" || state[0 + i*3] == "O")
+                return state[0 + i*3]
+        if (state[0 + i] == state[3 + i] && state[3 + i] == state[6 + i])
+            if (state[0 + i] == "X" || state[0 + i] == "O")
+                return state[0 + i]
+    }
+
+    if (state[0] == state[4] && state[4] == state[8])
+        if (state[0] == "X" || state[0] == "O")
+            return state[0]
+    if (state[2] == state[4] && state[4] == state[6])
+        if (state[2] == "X" || state[2] == "O")
+            return state[2]
+
+    isFull = true
+
+    state.forEach(square => {
+        if (square != "X" && square != "O")
+        {
+            isFull = false
+        }
+    });
+
+    if (isFull)
+        return "DRAW"
+    else
+        return "PLAYING"
+
+}
